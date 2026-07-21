@@ -1,0 +1,47 @@
+name: Build Phoc (.deb)
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Create output directory
+        run: mkdir -p buildd-results
+
+      - name: Build package
+        run: |
+          docker pull quay.io/droidian/build-essential:trixie-amd64
+
+          docker run --rm \
+            -e CI \
+            -e RELENG_HOST_ARCH=arm64 \
+            -v "${{ github.workspace }}:/buildd/sources" \
+            -v "${{ github.workspace }}/buildd-results:/buildd" \
+            quay.io/droidian/build-essential:trixie-amd64 \
+            /bin/bash -lc '
+              cd /buildd/sources
+              releng-build-package
+            '
+
+      - name: Show generated files
+        run: ls -lah buildd-results
+
+      - name: Upload .deb packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: phoc-debs
+          path: |
+            buildd-results/*.deb
+            buildd-results/*.ddeb
+            buildd-results/*.changes
+            buildd-results/*.buildinfo
+          if-no-files-found: error
