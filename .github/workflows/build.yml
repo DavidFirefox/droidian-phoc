@@ -35,6 +35,9 @@ jobs:
             /bin/bash -lc '
               cd /buildd/sources
               releng-build-package
+              git describe --tags --always
+              git tag -l 'upstream/*'
+              git rev-parse upstream/0.47.0
             '
             
       - name: Show generated files
