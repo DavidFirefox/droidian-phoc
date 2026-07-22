@@ -23,6 +23,7 @@ jobs:
 
           docker run --rm \
             -e CI \
+            -e IS_CONTAINER=true \
             -e CIRCLECI=true \
             -e CIRCLE_BRANCH="${{ github.ref_name }}" \
             -e CIRCLE_SHA1="${{ github.sha }}" \
