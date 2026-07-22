@@ -31,7 +31,7 @@ jobs:
             -e RELENG_HOST_ARCH=arm64 \
             -v "${{ github.workspace }}:/buildd/sources" \
             -v "${{ github.workspace }}/buildd-results:/buildd" \
-            quay.io/droidian/build-essential:trixie-amd64 \
+            quay.io/droidian/build-essential:current-amd64 \
             /bin/bash -lc '
               cd /buildd/sources
               releng-build-package
