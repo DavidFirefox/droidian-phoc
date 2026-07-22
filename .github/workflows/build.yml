@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Create output directory
         run: mkdir -p buildd-results
@@ -34,10 +37,12 @@ jobs:
             quay.io/droidian/build-essential:current-amd64 \
             /bin/bash -lc '
               cd /buildd/sources
+              echo "=== BEFORE BUILD ==="
+              git describe --tags --always || true
+              git tag -l 'upstream/*' || true
+              git rev-parse upstream/0.47.0 || true
+              echo "=== BUILD ==="
               releng-build-package
-              git describe --tags --always
-              git tag -l 'upstream/*'
-              git rev-parse upstream/0.47.0
             '
             
       - name: Show generated files
