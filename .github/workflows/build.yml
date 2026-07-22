@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout sources
@@ -22,7 +22,7 @@ jobs:
 
       - name: Build package
         run: |
-          docker pull quay.io/droidian/build-essential:current-amd64
+          docker pull quay.io/droidian/build-essential:current-arm64
 
           docker run --rm \
             -e CI \
@@ -34,7 +34,7 @@ jobs:
             -e RELENG_HOST_ARCH=arm64 \
             -v "${{ github.workspace }}:/buildd/sources" \
             -v "${{ github.workspace }}/buildd-results:/buildd" \
-            quay.io/droidian/build-essential:current-amd64 \
+            quay.io/droidian/build-essential:current-arm64 \
             /bin/bash -lc '
               cd /buildd/sources
               git config --global --add safe.directory /buildd/sources
