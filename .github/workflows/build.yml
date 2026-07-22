@@ -37,10 +37,15 @@ jobs:
             quay.io/droidian/build-essential:current-amd64 \
             /bin/bash -lc '
               cd /buildd/sources
+              git config --global --add safe.directory /buildd/sources
               echo "=== BEFORE BUILD ==="
               git describe --tags --always || true
               git tag -l 'upstream/*' || true
               git rev-parse upstream/0.47.0 || true
+              echo "=== TOOLCHAIN ==="
+              which aarch64-linux-gnu-gcc || true
+              dpkg -l | grep gcc-aarch64 || true
+              env | grep RELENG
               echo "=== BUILD ==="
               releng-build-package
             '
