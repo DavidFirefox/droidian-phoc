@@ -53,6 +53,9 @@ jobs:
               env | grep RELENG
               set +x
               echo "=== BUILD ==="
+              apt-cache policy gcc-aarch64-linux-gnu
+              dpkg -l | grep aarch64
+              ls /usr/bin/aarch64-linux-gnu-*
               releng-build-package
             '
             
