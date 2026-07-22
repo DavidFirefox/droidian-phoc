@@ -22,7 +22,7 @@ jobs:
 
       - name: Build package
         run: |
-          docker pull quay.io/droidian/build-essential:trixie-amd64
+          docker pull quay.io/droidian/build-essential:current-amd64
 
           docker run --rm \
             -e CI \
@@ -42,10 +42,16 @@ jobs:
               git describe --tags --always || true
               git tag -l 'upstream/*' || true
               git rev-parse upstream/0.47.0 || true
-              echo "=== TOOLCHAIN ==="
-              which aarch64-linux-gnu-gcc || true
-              dpkg -l | grep gcc-aarch64 || true
+              echo "=== TOOLCHAIN ==="    
+              set -x
+              which aarch64-linux-gnu-gcc
+              echo "which exit=$?"
+              dpkg -l | grep gcc-aarch64
+              echo "dpkg exit=$?"
+              find /usr/bin -name '*aarch64*'
+              find /usr/bin -name '*gcc*' | grep aarch64
               env | grep RELENG
+              set +x
               echo "=== BUILD ==="
               releng-build-package
             '
