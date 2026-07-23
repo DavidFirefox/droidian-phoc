@@ -124,6 +124,9 @@ phoc_gesture_finalize (GObject *object)
   PhocGesturePrivate *priv = phoc_gesture_get_instance_private (self);
 
   phoc_gesture_ungroup (self);
+  g_debug ("FINALIZE gesture=%p size=%u",
+         self,
+         g_hash_table_size (priv->points));
   g_clear_pointer (&priv->points, g_hash_table_destroy);
   g_clear_pointer (&priv->group_link, g_list_free);
 
@@ -378,6 +381,15 @@ phoc_gesture_update_point (PhocGesture     *self,
   sequence = phoc_event_get_event_sequence (event);
   existed = g_hash_table_lookup_extended (priv->points, sequence,
                                           NULL, (gpointer *) &data);
+  
+  g_debug ("UPDATE seq=%p add=%d existed=%d size=%u data=%p event=%d",
+         sequence,
+         add,
+         existed,
+         g_hash_table_size (priv->points),
+         data,
+         event->type);
+  
   if (!existed) {
     if (!add)
       return FALSE;
@@ -389,6 +401,10 @@ phoc_gesture_update_point (PhocGesture     *self,
 
     data = g_new0 (PointData, 1);
     g_hash_table_insert (priv->points, sequence, data);
+    g_debug ("INSERT seq=%p data=%p size=%u",
+         sequence,
+         data,
+         g_hash_table_size (priv->points));
   }
 
   if (data->event)
@@ -449,7 +465,23 @@ phoc_gesture_remove_point (PhocGesture     *self,
   if (priv->device != device)
     return;
 
+g_debug ("REMOVE BEFORE seq=%p size=%u",
+         sequence,
+         g_hash_table_size (priv->points));
+
+  {
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init (&iter, priv->points);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+      g_debug ("    key=%p value=%p", key, value);
+  }
+  
   g_hash_table_remove (priv->points, sequence);
+  g_debug ("REMOVE AFTER seq=%p size=%u",
+         sequence,
+         g_hash_table_size (priv->points));
   phoc_gesture_check_empty (self);
 }
 
@@ -463,9 +495,12 @@ phoc_gesture_cancel_all (PhocGesture *self)
 
   priv = phoc_gesture_get_instance_private (self);
   g_hash_table_iter_init (&iter, priv->points);
-
+  g_debug ("CANCEL ALL size=%u",
+         g_hash_table_size (priv->points));
   while (g_hash_table_iter_next (&iter, (gpointer*) &sequence, NULL)) {
     g_signal_emit (self, signals[CANCEL], 0, sequence);
+    g_debug ("ITER REMOVE seq=%p",
+         sequence);
     g_hash_table_iter_remove (&iter);
     phoc_gesture_check_recognized (self, sequence);
   }
@@ -718,7 +753,9 @@ static void
 free_point_data (gpointer data)
 {
   PointData *point = data;
-
+  g_debug ("FREE PointData=%p event=%p",
+         point,
+         point->event);
   g_clear_pointer (&point->event, phoc_event_free);
   g_free (point);
 }
@@ -810,8 +847,14 @@ phoc_gesture_get_sequence_state (PhocGesture       *self,
   data = g_hash_table_lookup (priv->points, sequence);
 
   if (!data)
+    g_debug ("GET_STATE seq=%p -> not found (size=%u)",
+             sequence,
+             g_hash_table_size (priv->points));
     return PHOC_EVENT_SEQUENCE_NONE;
-
+  g_debug ("GET_STATE seq=%p data=%p state=%d",
+         sequence,
+         data,
+         data->state);
   return data->state;
 }
 
