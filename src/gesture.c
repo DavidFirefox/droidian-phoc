@@ -462,6 +462,12 @@ phoc_gesture_remove_point (PhocGesture     *self,
   device = phoc_event_get_device (event);
   priv = phoc_gesture_get_instance_private (self);
 
+  
+ g_debug ("REMOVE sequence=%p event=%p device=%p",
+         sequence,
+         event,
+         device);
+  
   if (priv->device != device)
     return;
 
@@ -515,12 +521,13 @@ phoc_gesture_cancel_sequence (PhocGesture       *self,
 {
   PhocGesturePrivate *priv;
   PointData *data;
-
+  g_debug ("CANCEL sequence=%p", sequence);
   g_return_val_if_fail (PHOC_IS_GESTURE (self), FALSE);
 
   priv = phoc_gesture_get_instance_private (self);
   data = g_hash_table_lookup (priv->points, sequence);
-
+  g_debug ("CANCEL data=%p", data);
+  
   if (!data)
     return FALSE;
 
