@@ -1,3 +1,9 @@
+phoc (0.47.0d) experimental; urgency=medium
+
+  * Adding debug flag
+
+ -- DavidFirefox 
+
 phoc (0.47.0) experimental; urgency=medium
 
   * No changes over 0.47~rc1
