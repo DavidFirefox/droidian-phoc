@@ -1563,6 +1563,13 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
                              struct wlr_touch_up_event *event)
 {
   struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
+  if (point) {
+    g_debug("touch point=%p id=%d event_id=%d surface=%p",
+            point,
+            point->touch_id,
+            event->touch_id,
+            point->surface);
+  }
   PhocTouchPoint *touch_point;
   PhocCursorPrivate *priv;
 
