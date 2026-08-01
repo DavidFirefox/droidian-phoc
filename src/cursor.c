@@ -1686,9 +1686,23 @@ phoc_cursor_handle_touch_motion (PhocCursor                    *self,
     }
 
     if (found) {
-      struct wlr_surface *sub = surface;
+      struct wlr_surface *sub = surface;      
+      g_debug ("SUBSURFACE WALK: surface=%p root=%p point_surface=%p",
+           surface,
+           root,
+           point->surface);
       while (sub) {
+        g_debug ("SUBSURFACE CHECK: sub=%p surface=%p root=%p "
+           "point_surface=%p touch_id=%d",
+           sub,
+           surface,
+           root,
+           point->surface,
+           event->touch_id);
         struct wlr_subsurface *subsurface = wlr_subsurface_try_from_wlr_surface (sub);
+        g_debug ("SUBSURFACE RESULT: sub=%p subsurface=%p",
+           sub,
+           subsurface);
         if (subsurface == NULL)
           break;
 
