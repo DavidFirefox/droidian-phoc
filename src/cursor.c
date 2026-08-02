@@ -600,6 +600,13 @@ phoc_cursor_add_touch_point (PhocCursor *self, struct wlr_touch_down_event *even
                                         event->x, event->y, &lx, &ly);
   touch_point = phoc_touch_point_new (event->touch_id, lx, ly);
 
+  
+  g_debug ("PHOC TOUCH ADD: id=%d touch_point=%p lx=%f ly=%f",
+         event->touch_id,
+         touch_point,
+         lx,
+         ly);
+  
   if (!g_hash_table_insert (priv->touch_points,
                             GINT_TO_POINTER (event->touch_id),
                             touch_point)) {
@@ -618,6 +625,10 @@ phoc_cursor_update_touch_point (PhocCursor *self, struct wlr_touch_motion_event 
   double lx, ly;
 
   touch_point = g_hash_table_lookup (priv->touch_points, GINT_TO_POINTER (event->touch_id));
+  
+  g_debug ("PHOC TOUCH UPDATE LOOKUP: id=%d touch_point=%p",
+         event->touch_id,
+         touch_point);
   if (touch_point == NULL) {
     g_critical ("Touch point %d does not exist", event->touch_id);
     return NULL;
@@ -625,7 +636,12 @@ phoc_cursor_update_touch_point (PhocCursor *self, struct wlr_touch_motion_event 
   wlr_cursor_absolute_to_layout_coords (self->cursor, &event->touch->base,
                                         event->x, event->y, &lx, &ly);
   phoc_touch_point_update (touch_point, lx, ly);
-
+  g_debug ("PHOC TOUCH UPDATE: id=%d touch_point=%p lx=%f ly=%f",
+         event->touch_id,
+         touch_point,
+         lx,
+         ly);
+  
   return touch_point;
 }
 
@@ -635,6 +651,13 @@ phoc_cursor_remove_touch_point (PhocCursor *self, int touch_id)
 {
   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
 
+  // Ajout
+  PhocTouchPoint *touch_point = g_hash_table_lookup (priv->touch_points, GINT_TO_POINTER (touch_id));
+
+  g_debug ("PHOC TOUCH REMOVE: id=%d touch_point=%p",
+           touch_id,
+           touch_point);
+  
   if (!g_hash_table_remove (priv->touch_points, GINT_TO_POINTER (touch_id)))
     g_critical ("Touch point %d didn't exist", touch_id);
 }
@@ -1590,13 +1613,24 @@ void
 phoc_cursor_handle_touch_up (PhocCursor                *self,
                              struct wlr_touch_up_event *event)
 {
+  g_debug("TOUCH UP: self=%p seat=%p wlr_seat=%p event=%p id=%d",
+        self,
+        self->seat,
+        self->seat ? self->seat->seat : NULL,
+        event,
+        event ? event->touch_id : -1);
+  
   struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
+
+  g_debug("TOUCH UP: lookup point=%p", point);
+  
   if (point) {
-    g_debug("touch point=%p id=%d event_id=%d surface=%p",
+      g_debug("TOUCH UP: point=%p id=%d surface=%p sx=%f sy=%f",
             point,
             point->touch_id,
-            event->touch_id,
-            point->surface);
+            point->surface,
+            point->sx,
+            point->sy);
   }
   PhocTouchPoint *touch_point;
   PhocCursorPrivate *priv;
@@ -1605,21 +1639,57 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
   priv = phoc_cursor_get_instance_private (self);
 
   touch_point = phoc_cursor_get_touch_point (self, event->touch_id);
-
+  g_debug ("PHOC TOUCH UP: id=%d phoc_touch_point=%p",
+         event->touch_id,
+         touch_point);
+  
   /* Don't process unknown touch points */
   if (!touch_point)
     return;
-
+  
+  g_debug("TOUCH UP: phoc point=%p id=%d lx=%f ly=%f",
+        touch_point,
+        event->touch_id,
+        touch_point->lx,
+        touch_point->ly);
+  
   handle_gestures_for_event_at (self, touch_point->lx, touch_point->ly,
-                                PHOC_EVENT_TOUCH_END, event, sizeof (*event));
+                                PHOC_EVENT_TOUCH_END, event, sizeof (*event)); 
+  
+  g_debug ("PHOC TOUCH UP: id=%d phoc_touch_point=%p",
+         event->touch_id,
+         touch_point);
+  g_debug("TOUCH UP: after handle_gestures point=%p id=%d",
+          touch_point,
+          event->touch_id);
+  
+  g_debug("TOUCH UP: removing PhocTouchPoint=%p id=%d",
+        touch_point,
+        event->touch_id);
   phoc_cursor_remove_touch_point (self, event->touch_id);
-
+  
+  g_debug ("PHOC TOUCH UP AFTER REMOVE: id=%d phoc_touch_point=%p "
+         "wlr_point=%p surface=%p",
+         event->touch_id,
+         touch_point,
+         point,
+         point ? point->surface : NULL);
+  g_debug("TOUCH UP: removed PhocTouchPoint id=%d",
+        event->touch_id);
+  
+  g_debug("TOUCH UP: seat touch_id=%d event_id=%d",
+        self->seat->touch_id,
+        event->touch_id);
   if (self->seat->touch_id == event->touch_id)
     self->seat->touch_id = -1;
-
+  g_debug("TOUCH UP: seat touch_id after=%d",
+        self->seat->touch_id);
+  
   /* If the gesture got canceled don't notify any clients */
-  if (!point)
+  if (!point){
+    g_debug("TOUCH UP: no wlr_touch_point, not sending touch up");
     return;
+  }
 
   if (priv->mode != PHOC_CURSOR_PASSTHROUGH) {
     if (priv->view_state.view)
@@ -1628,7 +1698,13 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
     priv->mode = PHOC_CURSOR_PASSTHROUGH;
     phoc_cursor_update_focus (self);
   }
-
+  g_debug("TOUCH UP: sending seat=%p wlr_seat=%p point=%p surface=%p id=%d",
+        self->seat,
+        self->seat->seat,
+        point,
+        point->surface,
+        event->touch_id);
+  
   send_touch_up (self->seat, point->surface, event);
 }
 
