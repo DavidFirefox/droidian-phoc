@@ -358,16 +358,37 @@ should_ignore_touch_grab (PhocSeat           *seat,
 {
   // ignore seat grab when interacting with layer-surface
 
-  if (!surface)
+  g_debug ("TOUCH GRAB CHECK: seat=%p surface=%p",
+           seat, surface);
+
+  if (!surface) {
+    g_debug ("TOUCH GRAB CHECK: surface=NULL -> false");
     return false;
+  }
+
+  g_debug ("TOUCH GRAB CHECK: surface=%p resource=%p",
+           surface, surface->resource);
 
   struct wlr_surface *root = wlr_surface_get_root_surface (surface);
-  struct wlr_layer_surface_v1 *layer_surface = wlr_layer_surface_v1_try_from_wlr_surface (root);
+
+  g_debug ("TOUCH GRAB CHECK: root=%p",
+           root);
+
+  struct wlr_layer_surface_v1 *layer_surface =
+    wlr_layer_surface_v1_try_from_wlr_surface (root);
+
+  g_debug ("TOUCH GRAB CHECK: layer_surface=%p",
+           layer_surface);
+
+  bool has_grab = wlr_seat_touch_has_grab (seat->seat);
+
+  g_debug ("TOUCH GRAB CHECK: has_grab=%d -> result=%d",
+           has_grab,
+           layer_surface && has_grab);
 
   // FIXME: return false if the grab comes from a xdg-popup that belongs to a layer-surface
-  return layer_surface && wlr_seat_touch_has_grab (seat->seat);
+  return layer_surface && has_grab;
 }
-
 
 static bool
 should_ignore_pointer_grab (PhocSeat           *seat,
@@ -524,7 +545,14 @@ send_touch_up (PhocSeat                  *seat,
                struct wlr_touch_up_event *event)
 {
   uint32_t serial;
-
+  
+  g_debug ("TOUCH UP: seat=%p surface=%p event=%p touch_id=%d time=%u",
+           seat,
+           surface,
+           event,
+           event ? event->touch_id : -1,
+           event ? event->time_msec : 0);
+  
   if (should_ignore_touch_grab (seat, surface)) {
     // currently wlr_seat_touch_send_* functions don't work, so temporarily
     // restore grab to the default one and use notify_* instead
