@@ -1609,6 +1609,7 @@ void
 phoc_cursor_handle_touch_motion (PhocCursor                    *self,
                                  struct wlr_touch_motion_event *event)
 {
+  g_debug ("TOUCH MOTION BEGIN id=%d", event->touch_id);
   PhocDesktop *desktop = phoc_server_get_desktop (phoc_server_get_default ());
   PhocCursorPrivate *priv = phoc_cursor_get_instance_private (self);
   struct wlr_touch_point *point;
@@ -1619,9 +1620,16 @@ phoc_cursor_handle_touch_motion (PhocCursor                    *self,
   g_return_if_fail (touch_point);
   lx = touch_point->lx;
   ly = touch_point->ly;
+  g_debug ("TOUCH MOTION POINT id=%d touch_point=%p lx=%f ly=%f",
+           event->touch_id, touch_point, lx, ly);
   handle_gestures_for_event_at (self, lx, ly, PHOC_EVENT_TOUCH_UPDATE, event, sizeof (*event));
-
+  g_debug ("TOUCH MOTION AFTER GESTURES id=%d", event->touch_id);
   point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
+  g_debug ("TOUCH MOTION SEAT POINT id=%d point=%p surface=%p",
+           event->touch_id,
+           point,
+           point ? point->surface : NULL);
+  
   /* If the gesture got canceled don't notify any clients */
   if (!point)
     return;
@@ -1632,7 +1640,9 @@ phoc_cursor_handle_touch_motion (PhocCursor                    *self,
 
   double sx, sy;
   struct wlr_surface *surface = point->surface;
-
+  
+  g_debug ("TOUCH MOTION SURFACE id=%d surface=%p",
+           event->touch_id, surface);
   // TODO: test with input regions
   if (surface) {
     bool found = false;
