@@ -4,7 +4,7 @@ project('phoc', 'c',
     meson_version: '>= 0.63.0',
   default_options: [
     'warning_level=1',
-    'buildtype=debugoptimized',
+    'buildtype=debug',
     'c_std=gnu11',
   ],
 )
