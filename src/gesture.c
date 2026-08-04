@@ -853,11 +853,12 @@ phoc_gesture_get_sequence_state (PhocGesture       *self,
   priv = phoc_gesture_get_instance_private (self);
   data = g_hash_table_lookup (priv->points, sequence);
 
-  if (!data)
+  if (!data)  {
     g_debug ("GET_STATE seq=%p -> not found (size=%u)",
              sequence,
              g_hash_table_size (priv->points));
     return PHOC_EVENT_SEQUENCE_NONE;
+  }  
   g_debug ("GET_STATE seq=%p data=%p state=%d",
          sequence,
          data,
