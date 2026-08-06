@@ -132,7 +132,7 @@ phoc_gesture_finalize (GObject *object)
 
   G_OBJECT_CLASS (phoc_gesture_parent_class)->finalize (object);
 
-  G_OBJECT_CLASS (phoc_gesture_parent_class)->finalize (object);
+  // G_OBJECT_CLASS (phoc_gesture_parent_class)->finalize (object); //maybe a bug
 }
 
 
