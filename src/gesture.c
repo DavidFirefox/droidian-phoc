@@ -382,7 +382,8 @@ phoc_gesture_update_point (PhocGesture     *self,
   existed = g_hash_table_lookup_extended (priv->points, sequence,
                                           NULL, (gpointer *) &data);
   
-  g_debug ("UPDATE seq=%p add=%d existed=%d size=%u data=%p event=%d",
+  g_debug ("UPDATE gesture=%p seq=%p add=%d existed=%d size=%u data=%p event=%d",
+         self,
          sequence,
          add,
          existed,
@@ -401,7 +402,8 @@ phoc_gesture_update_point (PhocGesture     *self,
 
     data = g_new0 (PointData, 1);
     g_hash_table_insert (priv->points, sequence, data);
-    g_debug ("INSERT seq=%p data=%p size=%u",
+    g_debug ("INSERT gesture=%p seq=%p data=%p size=%u",
+         self,
          sequence,
          data,
          g_hash_table_size (priv->points));
@@ -463,17 +465,19 @@ phoc_gesture_remove_point (PhocGesture     *self,
   priv = phoc_gesture_get_instance_private (self);
 
   
- g_debug ("REMOVE sequence=%p event=%p device=%p",
-         sequence,
-         event,
-         device);
+  g_debug ("REMOVE gesture=%p sequence=%p event=%p device=%p",
+           self,
+           sequence,
+           event,
+           device);
   
   if (priv->device != device)
     return;
 
-g_debug ("REMOVE BEFORE seq=%p size=%u",
-         sequence,
-         g_hash_table_size (priv->points));
+  g_debug ("REMOVE BEFORE gesture=%p seq=%p size=%u",
+           self,
+           sequence,
+           g_hash_table_size (priv->points));
 
   {
     GHashTableIter iter;
@@ -481,14 +485,23 @@ g_debug ("REMOVE BEFORE seq=%p size=%u",
 
     g_hash_table_iter_init (&iter, priv->points);
     while (g_hash_table_iter_next (&iter, &key, &value))
-      g_debug ("    key=%p value=%p", key, value);
+      g_debug ("    gesture=%p key=%p value=%p",
+               self,
+               key,
+               value);
   }
   
   g_hash_table_remove (priv->points, sequence);
-  g_debug ("REMOVE AFTER seq=%p size=%u",
-         sequence,
-         g_hash_table_size (priv->points));
+  g_debug ("REMOVE AFTER gesture=%p seq=%p size=%u",
+           self,
+           sequence,
+           g_hash_table_size (priv->points));
   phoc_gesture_check_empty (self);
+  g_debug ("REMOVE DONE seq=%p size=%u device=%p touchpad=%d",
+           sequence,
+           g_hash_table_size (priv->points),
+           priv->device,
+           priv->touchpad);
 }
 
 
@@ -528,10 +541,28 @@ phoc_gesture_cancel_sequence (PhocGesture       *self,
   data = g_hash_table_lookup (priv->points, sequence);
   g_debug ("CANCEL data=%p", data);
   
+  g_debug ("CANCEL LOOKUP sequence=%p data=%p size=%u",
+           sequence,
+           data,
+           g_hash_table_size (priv->points));
+
   if (!data)
     return FALSE;
 
+  g_debug ("CANCEL BEFORE EMIT sequence=%p data=%p event=%p size=%u",
+           sequence,
+           data,
+           data->event,
+           g_hash_table_size (priv->points));
+  
   g_signal_emit (self, signals[CANCEL], 0, sequence);
+  
+  g_debug ("CANCEL AFTER EMIT sequence=%p data=%p event=%p size=%u",
+           sequence,
+           data,
+           data->event,
+           g_hash_table_size (priv->points));
+  
   phoc_gesture_remove_point (self, data->event);
   phoc_gesture_check_recognized (self, sequence);
 
@@ -624,7 +655,13 @@ phoc_gesture_handle_event_impl (PhocGesture *self, const PhocEvent *event, doubl
     /* Unhandled event */
     return FALSE;
   }
-
+  
+  g_debug ("HANDLE FINAL event=%d seq=%p size=%u recognized=%d",
+           event->type,
+           sequence,
+           g_hash_table_size (priv->points),
+           priv->recognized);
+  
   if (phoc_gesture_get_sequence_state (self, sequence) != PHOC_EVENT_SEQUENCE_CLAIMED)
     return FALSE;
 
@@ -854,12 +891,14 @@ phoc_gesture_get_sequence_state (PhocGesture       *self,
   data = g_hash_table_lookup (priv->points, sequence);
 
   if (!data)  {
-    g_debug ("GET_STATE seq=%p -> not found (size=%u)",
-             sequence,
-             g_hash_table_size (priv->points));
+    g_debug ("GET_STATE gesture=%p seq=%p -> not found (size=%u)",
+           self,
+           sequence,
+           g_hash_table_size (priv->points));
     return PHOC_EVENT_SEQUENCE_NONE;
   }  
-  g_debug ("GET_STATE seq=%p data=%p state=%d",
+  g_debug ("GET_STATE gesture=%p seq=%p data=%p state=%d",
+         self,
          sequence,
          data,
          data->state);
