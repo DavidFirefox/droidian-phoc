@@ -593,6 +593,10 @@ phoc_output_draw (PhocOutput *self)
   struct wlr_render_pass *render_pass;
   struct wlr_output_state pending = { 0 };
 
+  g_message ("OUTPUT DRAW: wlr_output=%p name='%s'",
+           wlr_output,
+           wlr_output->name ? wlr_output->name : "(null)");
+
   if (!wlr_output->enabled)
     return;
 
@@ -629,6 +633,13 @@ phoc_output_draw (PhocOutput *self)
     buffer_age = wlr_renderer_get_buffer_age (wlr_output->renderer, buffer);
 
   render_pass = wlr_renderer_begin_buffer_pass_for_output (wlr_output->renderer, buffer, NULL, (void*)wlr_output);
+
+  g_message ("OUTPUT RENDER PASS: wlr_output=%p name='%s' render_pass=%p buffer=%p",
+           wlr_output,
+           wlr_output->name ? wlr_output->name : "(null)",
+           render_pass,
+           buffer);
+  
   if (!render_pass) {
     wlr_buffer_unlock (buffer);
     goto out;
@@ -648,6 +659,10 @@ phoc_output_draw (PhocOutput *self)
   pixman_region32_fini (&buffer_damage);
 
   if (!wlr_render_pass_submit (render_pass)) {
+    g_message ("OUTPUT RENDER PASS FAILED: wlr_output=%p name='%s' render_pass=%p",
+             wlr_output,
+             wlr_output->name ? wlr_output->name : "(null)",
+             render_pass);
     /* Rerender in case of failure */
     wlr_damage_ring_add_whole (&self->damage_ring);
     wlr_buffer_unlock (buffer);
@@ -656,7 +671,12 @@ phoc_output_draw (PhocOutput *self)
 
   wlr_output_state_set_buffer (&pending, buffer);
   wlr_buffer_unlock (buffer);
-
+  
+  g_message ("OUTPUT COMMIT: wlr_output=%p name='%s' buffer=%p",
+           wlr_output,
+           wlr_output->name ? wlr_output->name : "(null)",
+           buffer);
+  
   if (!wlr_output_commit_state (wlr_output, &pending))
     goto out;
 
