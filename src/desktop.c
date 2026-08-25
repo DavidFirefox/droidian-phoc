@@ -527,7 +527,13 @@ on_output_destroyed (PhocDesktop *self, PhocOutput *destroyed_output)
 
   g_assert (PHOC_IS_DESKTOP (self));
   g_assert (PHOC_IS_OUTPUT (destroyed_output));
-
+  
+  g_message ("OUTPUT DESTROYED: wlr_output=%p name='%s' phoc_output=%p",
+           destroyed_output->wlr_output,
+           destroyed_output->wlr_output->name ?
+             destroyed_output->wlr_output->name : "(null)",
+           destroyed_output);
+  
   wlr_output_layout_remove (self->layout, phoc_output_get_wlr_output (destroyed_output));
 
   g_hash_table_iter_init (&iter, self->input_output_map);
@@ -548,13 +554,28 @@ handle_new_output (struct wl_listener *listener, void *data)
 {
   g_autoptr (GError) error = NULL;
   PhocDesktop *self = wl_container_of (listener, self, new_output);
-  PhocOutput *output = phoc_output_new (self, (struct wlr_output *)data, &error);
+  
+  struct wlr_output *wlr_output = data;
 
+  g_message ("OUTPUT ADD: wlr_output=%p name='%s'",
+           wlr_output,
+           wlr_output->name ? wlr_output->name : "(null)");
+  
+//  PhocOutput *output = phoc_output_new (self, (struct wlr_output *)data, &error);
+  PhocOutput *output = phoc_output_new (self, wlr_output, &error);
+  
   if (output == NULL) {
+    g_message ("OUTPUT NULL - handle_new_output");
     g_critical ("Failed to init new output: %s", error->message);
     return;
   }
 
+  
+  g_message ("OUTPUT CREATED: wlr_output=%p name='%s' phoc_output=%p",
+           wlr_output,
+           wlr_output->name ? wlr_output->name : "(null)",
+           output);
+  
   g_signal_connect_object (output, "output-destroyed",
                            G_CALLBACK (on_output_destroyed),
                            self,
@@ -566,7 +587,9 @@ static void
 handle_backend_destroy (struct wl_listener *listener, void *data)
 {
   PhocDesktop *self = wl_container_of (listener, self, backend_destroy);
-
+  
+  g_message ("BACKEND DESTROY: backend=%p", data);
+  
   wl_list_remove (&self->new_output.link);
   wl_list_remove (&self->backend_destroy.link);
 }
