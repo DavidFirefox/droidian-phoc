@@ -356,9 +356,9 @@ static bool
 should_ignore_touch_grab (PhocSeat           *seat,
                           struct wlr_surface *surface)
 {
-  // ignore seat grab when interacting with layer-surface
+ // ignore seat grab when interacting with layer-surface
 
-  g_debug ("TOUCH GRAB CHECK: seat=%p surface=%p",
+  g_debug ("TOUCH GRAB CHECK: START seat=%p surface=%p",
            seat, surface);
 
   if (!surface) {
@@ -366,23 +366,38 @@ should_ignore_touch_grab (PhocSeat           *seat,
     return false;
   }
 
+  g_debug ("TOUCH GRAB CHECK: BEFORE surface->resource");
+
   g_debug ("TOUCH GRAB CHECK: surface=%p resource=%p",
            surface, surface->resource);
 
+  g_debug ("TOUCH GRAB CHECK: AFTER surface->resource");
+
+  g_debug ("TOUCH GRAB CHECK: BEFORE wlr_surface_get_root_surface");
+
   struct wlr_surface *root = wlr_surface_get_root_surface (surface);
 
-  g_debug ("TOUCH GRAB CHECK: root=%p",
+  g_debug ("TOUCH GRAB CHECK: AFTER wlr_surface_get_root_surface root=%p",
            root);
+
+  g_debug ("TOUCH GRAB CHECK: BEFORE wlr_layer_surface_v1_try_from_wlr_surface");
 
   struct wlr_layer_surface_v1 *layer_surface =
     wlr_layer_surface_v1_try_from_wlr_surface (root);
 
-  g_debug ("TOUCH GRAB CHECK: layer_surface=%p",
+  g_debug ("TOUCH GRAB CHECK: AFTER wlr_layer_surface_v1_try_from_wlr_surface "
+           "layer_surface=%p",
            layer_surface);
+
+  g_debug ("TOUCH GRAB CHECK: BEFORE wlr_seat_touch_has_grab");
 
   bool has_grab = wlr_seat_touch_has_grab (seat->seat);
 
-  g_debug ("TOUCH GRAB CHECK: has_grab=%d -> result=%d",
+  g_debug ("TOUCH GRAB CHECK: AFTER wlr_seat_touch_has_grab has_grab=%d",
+           has_grab);
+
+  g_debug ("TOUCH GRAB CHECK: RESULT layer_surface=%p has_grab=%d result=%d",
+           layer_surface,
            has_grab,
            layer_surface && has_grab);
 
