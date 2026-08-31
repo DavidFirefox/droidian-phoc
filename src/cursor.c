@@ -1636,8 +1636,14 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
         event ? event->touch_id : -1);
   
   struct wlr_touch_point *point = wlr_seat_touch_get_point (self->seat->seat, event->touch_id);
-
-  g_debug("TOUCH UP: lookup point=%p", point);
+  struct wlr_surface *surface = point ? point->surface : NULL;
+  
+  g_debug("TOUCH UP: lookup point=%p surface=%p", point, surface);
+  
+  if (!surface) {
+    g_debug("TOUCH UP: no surface, not sending touch up");
+    //return;
+  }
   
   if (point) {
       g_debug("TOUCH UP: point=%p id=%d surface=%p sx=%f sy=%f",
@@ -1682,13 +1688,18 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
         touch_point,
         event->touch_id);
   phoc_cursor_remove_touch_point (self, event->touch_id);
+
   
-  g_debug ("PHOC TOUCH UP AFTER REMOVE: id=%d phoc_touch_point=%p "
-         "wlr_point=%p surface=%p",
+  if (!surface) {
+    g_debug("TOUCH UP: no surface, not sending touch up");
+    //return;
+  }
+  
+g_debug ("PHOC TOUCH UP AFTER REMOVE: id=%d "
+         "phoc_touch_point=%p surface=%p",
          event->touch_id,
          touch_point,
-         point,
-         point ? point->surface : NULL);
+         surface);
   g_debug("TOUCH UP: removed PhocTouchPoint id=%d",
         event->touch_id);
   
@@ -1717,10 +1728,10 @@ phoc_cursor_handle_touch_up (PhocCursor                *self,
         self->seat,
         self->seat->seat,
         point,
-        point->surface,
+        surface,
         event->touch_id);
-  
-  send_touch_up (self->seat, point->surface, event);
+
+  send_touch_up (self->seat, surface, event);
 }
 
 
